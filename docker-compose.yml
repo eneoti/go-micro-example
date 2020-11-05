@@ -1,0 +1,70 @@
+version: '3'
+services:
+  helloworld:
+    build: .
+    container_name: helloworld 
+    image: helloworld
+    stop_signal: SIGINT
+    restart: always
+    
+
+    depends_on:
+      - nats-cluster
+      - etcd-cluster-client
+      - micro-web
+
+
+  nats-cluster:
+    image: nats:latest
+    container_name: nats-cluster
+    ports:
+      - "4222:4222"
+  etcd-cluster-client:
+    image: docker.io/bitnami/etcd:3-debian-10
+    ports:
+      - "2380:2380"
+      - "2379:2379"
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_NAME=etcd-cluster-client
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd-cluster-client:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd-cluster-client:2379
+  micro-web:
+    image: micro/micro:v2.9.3
+    ports:
+      - "8082:8082"
+    environment:
+      - MICRO_BROKER=nats
+      - MICRO_BROKER_ADDRESS=nats-cluster
+      - MICRO_ENABLE_STATS=true
+      - MICRO_REGISTRY=etcd
+      - MICRO_REGISTRY_ADDRESS=etcd-cluster-client
+      - MICRO_ENABLE_ACME=false
+      - MICRO_ENABLE_TLS=false
+      - MICRO_LOG_LEVEL=debug"
+    command: ['web']
+  micro-api:
+    image: micro/micro:v2.9.3
+    ports:
+      - "8080:8080"
+    environment:
+      - MICRO_BROKER=nats
+      - MICRO_BROKER_ADDRESS=nats-cluster
+      - MICRO_ENABLE_STATS=true
+      - MICRO_REGISTRY=etcd
+      - MICRO_REGISTRY_ADDRESS=etcd-cluster-client
+      - MICRO_ENABLE_TLS=false
+      - MICRO_LOG_LEVEL=debug"
+      - MICRO_REGISTER_TTL=60
+      - MICRO_REGISTER_INTERVAL=30
+      - MICRO_ENABLE_ACME=false
+      - MICRO_API_HANDLER=api
+      - CORS_ALLOWED_HEADERS=Origin,Content-Type,Accept,Authorization
+      - CORS_ALLOWED_ORIGINS=*
+      - CORS_ALLOWED_METHODS=*
+    command: ['api']
+
+
+
