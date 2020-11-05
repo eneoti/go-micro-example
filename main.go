@@ -2,17 +2,15 @@ package main
 
 import (
 	"github.com/micro/examples/helloworld/handler"
-	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/logger"
-
 	pb "github.com/micro/examples/helloworld/proto"
+	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/v2/logger"
 )
 
 func main() {
 	// New Service
 	helloworld := micro.NewService(
-		micro.Name("go.micro.srv.helloworld"),
-		micro.Version("v2"),
+		micro.Name("helloworld"),
 	)
 
 	// Initialise service
